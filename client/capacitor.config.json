@@ -1,5 +1,16 @@
 {
   "appId": "com.disaster.app",
   "appName": "DMSManageMP",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": [
+      "napping-woven-iciness.ngrok-free.dev"
+    ]
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
 }

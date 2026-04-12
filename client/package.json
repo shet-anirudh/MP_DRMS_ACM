@@ -10,11 +10,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor-community/sqlite": "^8.1.0",
     "@capacitor/android": "^8.3.0",
     "@capacitor/cli": "^8.3.0",
     "@capacitor/core": "^8.3.0",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/geolocation": "^8.2.0",
     "axios": "^1.15.0",
     "idb": "^8.0.3",
+    "jeep-sqlite": "^2.8.0",
+    "lucide-react": "^0.488.0",
+    "maplibre-gl": "^4.7.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

@@ -77,7 +77,7 @@ async function performSync(url, timeoutConfig = 0) {
   }
 }
 
-const BASE_URL = 'https://napping-woven-iciness.ngrok-free.dev';
+const BASE_URL = import.meta.env.VITE_SYNC_URL || 'http://localhost:3001';
 
 export async function syncWithServer() {
   return await performSync(`${BASE_URL}/sync`);

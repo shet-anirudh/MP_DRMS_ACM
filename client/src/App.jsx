@@ -1,255 +1,244 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { Map, FileText, User } from 'lucide-react';
+
 import { initDB, getReports, updateReport } from './db/db.js';
 import { syncWithServer, syncWithPeer, isOnline } from './services/sync.js';
 import { getDeviceId } from './services/deviceId.js';
-import { ReportForm } from './components/ReportForm.jsx';
-import { ReportList } from './components/ReportList.jsx';
-import { PeerDiscoveryScreen } from './screens/PeerDiscoveryScreen.jsx';
+
+import { LoginScreen }    from './components/LoginScreen.jsx';
+import { MapScreen }      from './components/MapScreen.jsx';
+import { ReportForm }     from './components/ReportForm.jsx';
+import { ReportList }     from './components/ReportList.jsx';
+import { ProfileScreen }  from './components/ProfileScreen.jsx';
+
 import './App.css';
 
+const TABS = [
+  { id: 'map',     label: 'Map',     Icon: Map },
+  { id: 'reports', label: 'Reports', Icon: FileText },
+  { id: 'profile', label: 'Profile', Icon: User },
+];
+
 function App() {
-  const [reports, setReports] = useState([]);
-  const [syncStatus, setSyncStatus] = useState('idle');
-  const [peerIp, setPeerIp] = useState('');
-  const [p2pSyncStatus, setP2pSyncStatus] = useState('idle');
-  const [p2pMode, setP2pMode] = useState(false);
-  const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
+  // ─── Auth ───────────────────────────────────────────────────────────────────
+  const [volunteerId, setVolunteerId] = useState(() => localStorage.getItem('volunteerId') || null);
+
+  // ─── Navigation ─────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab]     = useState('map');
+  const [showForm, setShowForm]       = useState(false);
   const [editingReport, setEditingReport] = useState(null);
 
-  const handlePeerSelected = async (selectedIp) => {
-    setShowDiscoveryModal(false);
-    setSyncStatus('syncing');
-    try {
-      const updated = await syncWithPeer(selectedIp);
-      setReports(updated);
-      setSyncStatus('done');
-      setTimeout(() => setSyncStatus('idle'), 2000);
-      
-      const hasConflict = updated.some(r => r.syncStatus === 'conflict');
-      if (hasConflict) {
-        setTimeout(() => {
-          const conflictEl = document.querySelector('.badge-red');
-          if (conflictEl) {
-            conflictEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 100);
-      }
-    } catch (err) {
-      console.error("Peer sync error:", err);
-      setSyncStatus('error');
-      setTimeout(() => setSyncStatus('idle'), 3000);
-      window.alert("Could not reach peer device. Make sure both devices are on the same WiFi network.");
-    }
-  };
+  // ─── Data ────────────────────────────────────────────────────────────────────
+  const [reports, setReports]         = useState([]);
+  const [dbReady, setDbReady]         = useState(false);
 
-  const fetchReports = async () => {
-    try {
-      const allReports = await getReports();
-      setReports(allReports);
-    } catch (err) {
-      console.error("Failed to fetch reports:", err);
-    }
-  };
+  // ─── Sync state ──────────────────────────────────────────────────────────────
+  const [syncStatus, setSyncStatus]   = useState('idle'); // idle|syncing|done|error|offline
+  const pollingRef = useRef(null);
 
+  // ─── DB initialisation ───────────────────────────────────────────────────────
   useEffect(() => {
-    const init = async () => {
-      try {
-        await initDB();
-        console.log("DB ready");
-        await fetchReports();
-      } catch (err) {
-        console.error("DB init failed", err);
-      }
-    };
-
-    init();
+    initDB()
+      .then(() => {
+        setDbReady(true);
+        fetchReports();
+      })
+      .catch(err => console.error('DB init failed:', err));
   }, []);
 
-  const handleReportAdded = () => {
-    fetchReports();
-    setEditingReport(null);
+  // ─── 5-second polling while logged in ───────────────────────────────────────
+  useEffect(() => {
+    if (!dbReady || !volunteerId) return;
+    pollingRef.current = setInterval(fetchReports, 5000);
+    return () => clearInterval(pollingRef.current);
+  }, [dbReady, volunteerId]);
+
+  const fetchReports = useCallback(async () => {
+    try {
+      const all = await getReports();
+      setReports(all);
+    } catch (err) {
+      console.error('fetchReports failed:', err);
+    }
+  }, []);
+
+  // ─── Login / logout ──────────────────────────────────────────────────────────
+  const handleLogin = (id) => {
+    localStorage.setItem('volunteerId', id);
+    setVolunteerId(id);
   };
 
-  const handleResolve = async (reportId, fieldName, chosenVersion) => {
-    // 1. Get the current report from local DB
+  const handleLogout = () => {
+    localStorage.removeItem('volunteerId');
+    setVolunteerId(null);
+  };
+
+  // ─── Conflict resolution ─────────────────────────────────────────────────────
+  const handleResolve = useCallback(async (reportId, fieldName, chosenVersion) => {
     const allReports = await getReports();
     const report = allReports.find(r => r.reportId === reportId);
     if (!report) return;
 
-    // 2. Replace the conflicting field with the chosen version
-    // CRITICAL: We give it a NEW timestamp (Date.now()) so it beats the server's old version!
-    // Using spread (...chosenVersion) ensures we retain field variations safely (like .value vs .lat/.lon for location).
     const resolvedField = {
       ...chosenVersion,
       timestamp: Date.now(),
-      updatedBy: getDeviceId()
+      updatedBy: getDeviceId(),
     };
 
-    // 3. Build the updated report
-    const updatedReport = {
-      ...report,
-      [fieldName]: resolvedField
-    };
+    const updatedReport = { ...report, [fieldName]: resolvedField };
 
-    // 4. Check if any OTHER fields still have conflicts
-    const stillConflicted = ['injuredCount', 'notes', 'location']
+    const stillConflicted = ['injuredCount', 'notes', 'location', 'priority', 'volunteersRequired']
       .some(f => f !== fieldName && updatedReport[f]?.conflict === true);
 
-    // If no other fields are conflicted, set status to pending so we can push to server seamlessly.
     updatedReport.syncStatus = stillConflicted ? 'conflict' : 'pending';
-
-    // 5. Save to IndexedDB
     await updateReport(reportId, updatedReport);
+    await fetchReports();
+  }, [fetchReports]);
 
-    // 6. Refresh the report list
-    const fresh = await getReports();
-    setReports(fresh);
-
-    console.log(`Resolved ${fieldName}. New status: ${updatedReport.syncStatus}`);
-  };
-
-  const handleSync = async () => {
+  // ─── Server sync ─────────────────────────────────────────────────────────────
+  const handleServerSync = useCallback(async () => {
     if (!isOnline()) {
       setSyncStatus('offline');
       setTimeout(() => setSyncStatus('idle'), 3000);
       return;
     }
-    
     setSyncStatus('syncing');
-    
     try {
       const updated = await syncWithServer();
       setReports(updated);
       setSyncStatus('done');
       setTimeout(() => setSyncStatus('idle'), 3000);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setSyncStatus('error');
       setTimeout(() => setSyncStatus('idle'), 3000);
     }
-  };
+  }, []);
 
-  const handleP2PSync = async () => {
-    if (!peerIp) return;
-    try {
-      setP2pSyncStatus('syncing');
-      const updated = await syncWithPeer(peerIp);
-      setReports(updated);
-      setP2pSyncStatus('done');
-      setTimeout(() => setP2pSyncStatus('idle'), 3000);
-    } catch (error) {
-      console.error(error);
-      setP2pSyncStatus('error');
-      setTimeout(() => setP2pSyncStatus('idle'), 3000);
-    }
-  };
+  // ─── P2P sync (called from Profile screen) ───────────────────────────────────
+  const handlePeerSync = useCallback(async (peerIp) => {
+    const updated = await syncWithPeer(peerIp);
+    setReports(updated);
+  }, []);
+
+  // ─── Report form helpers ──────────────────────────────────────────────────────
+  const handleReportAdded = useCallback(() => {
+    fetchReports();
+    setShowForm(false);
+    setEditingReport(null);
+    setActiveTab('reports');
+  }, [fetchReports]);
+
+  const handleEditReport = useCallback((report) => {
+    setEditingReport(report);
+    setShowForm(true);
+    setActiveTab('reports');
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingReport(null);
+    setShowForm(false);
+  }, []);
+
+  // ─── If not yet logged in ────────────────────────────────────────────────────
+  if (!volunteerId) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // ─── Render ──────────────────────────────────────────────────────────────────
+  const conflictCount = reports.filter(r => r.syncStatus === 'conflict').length;
 
   return (
-    <div className="app-container">
-      {showDiscoveryModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, backgroundColor: 'var(--bg-color)', overflow: 'auto' }}>
-          <PeerDiscoveryScreen 
-            onPeerSelected={handlePeerSelected} 
-            onBack={() => setShowDiscoveryModal(false)} 
+    <div className="app-shell">
+
+      {/* ── Tab content ── */}
+      <div className="tab-content">
+
+        {/* MAP TAB */}
+        {activeTab === 'map' && (
+          <MapScreen
+            reports={reports}
+            onAddReport={() => { setShowForm(true); setEditingReport(null); setActiveTab('reports'); }}
           />
-        </div>
-      )}
-      {p2pMode && (
-        <div style={{ background: '#e67e22', color: 'white', padding: '0.5rem', textAlign: 'center', width: '100%', fontWeight: 'bold' }}>
-          P2P Mode Active — syncing peer to peer
-        </div>
-      )}
-      <header>
-        <h1>Disaster Response App</h1>
-        <div className="sync-controls">
-          {!p2pMode ? (
-            <button 
-              onClick={handleSync} 
-              disabled={syncStatus === 'syncing'}
-              className="sync-btn"
-            >
-              Sync Now
-            </button>
-          ) : (
-            <button 
-              onClick={() => setShowDiscoveryModal(true)} 
-              disabled={syncStatus === 'syncing'}
-              className="sync-btn"
-            >
-              Find Nearby Devices
-            </button>
-          )}
-          
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginLeft: '10px' }}>
-            <button 
-              onClick={() => setP2pMode(!p2pMode)} 
-              className="sync-btn"
-              style={{ background: p2pMode ? '#e67e22' : 'transparent', border: '1px solid rgba(255,255,255,0.2)', width: '100%' }}
-            >
-              P2P Mode
-            </button>
-            <span style={{ fontSize: '0.65rem', color: '#95a5a6', marginTop: '4px' }}>
-              Uses WiFi Direct in production · Simulated over LAN for demo
-            </span>
+        )}
+
+        {/* REPORTS TAB */}
+        {activeTab === 'reports' && (
+          <div className="reports-tab">
+            {showForm ? (
+              <div className="form-page">
+                <div className="form-page-header">
+                  <h2>{editingReport ? 'Edit Report' : 'New Report'}</h2>
+                  <button className="icon-btn" onClick={handleCancelEdit}>✕</button>
+                </div>
+                <ReportForm
+                  onReportAdded={handleReportAdded}
+                  editingReport={editingReport}
+                  onCancelEdit={handleCancelEdit}
+                />
+              </div>
+            ) : (
+              <div className="list-page">
+                <div className="list-page-header">
+                  <h2>Reports</h2>
+                  <button
+                    id="btn-new-report"
+                    className="btn-pill btn-primary-red btn-sm"
+                    onClick={() => { setShowForm(true); setEditingReport(null); }}
+                  >
+                    + New
+                  </button>
+                </div>
+                {reports.length === 0 ? (
+                  <div className="empty-state">
+                    <FileText size={48} color="#ccc" />
+                    <p>No reports yet. Tap <strong>+ New</strong> to add your first.</p>
+                  </div>
+                ) : (
+                  <ReportList
+                    reports={reports}
+                    onResolve={handleResolve}
+                    onEditReport={handleEditReport}
+                  />
+                )}
+              </div>
+            )}
           </div>
-          
-          {syncStatus !== 'idle' && (
-            <span className="sync-status">
-              {syncStatus === 'syncing' && (p2pMode ? 'Syncing with peer...' : 'Syncing...')}
-              {syncStatus === 'done' && (p2pMode ? 'Sync complete!' : 'Synced ✓')}
-              {syncStatus === 'error' && 'Sync failed'}
-              {syncStatus === 'offline' && 'You are offline'}
-            </span>
-          )}
-        </div>
-      </header>
-      <main>
-        <div className="layout-grid">
-          <section className="form-section">
-            <h2>{editingReport ? 'Edit Report' : 'Add New Report'}</h2>
-            <ReportForm 
-              onReportAdded={handleReportAdded} 
-              p2pMode={p2pMode} 
-              setP2pMode={setP2pMode} 
-              editingReport={editingReport}
-              onCancelEdit={() => setEditingReport(null)}
-            />
-            
-            <div className="p2p-card" style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--surface-color)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <h3 style={{ marginTop: 0 }}>P2P Local Sync</h3>
-              <p style={{ fontSize: '0.85rem', color: '#a4b0be', marginBottom: '1rem' }}>
-                Sync directly with a device on the local network.
-              </p>
-              <input 
-                type="text" 
-                placeholder="192.168.1.50" 
-                value={peerIp} 
-                onChange={(e) => setPeerIp(e.target.value)}
-                style={{ width: '100%', padding: '0.8rem', marginBottom: '1rem', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '4px', boxSizing: 'border-box' }}
-              />
-              <button 
-                onClick={handleP2PSync} 
-                disabled={p2pSyncStatus === 'syncing' || !peerIp}
-                style={{ width: '100%', padding: '0.8rem', background: p2pSyncStatus === 'syncing' ? 'var(--bg-color)' : '#9b59b6', color: 'white', border: 'none', borderRadius: '4px', cursor: p2pSyncStatus === 'syncing' ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}
-              >
-                {p2pSyncStatus === 'syncing' ? 'Syncing...' : 'Sync with Peer'}
-              </button>
-              {p2pSyncStatus === 'done' && <p style={{ color: '#2ed573', fontSize: '0.85rem', marginTop: '1rem', textAlign: 'center', marginBottom: 0 }}>P2P Success!</p>}
-              {p2pSyncStatus === 'error' && <p style={{ color: '#ff4757', fontSize: '0.85rem', marginTop: '1rem', textAlign: 'center', marginBottom: 0 }}>Sync failed. Check IP.</p>}
-            </div>
-          </section>
-          <section className="list-section">
-            <h2>Recent Reports</h2>
-            <ReportList 
-              reports={reports} 
-              onResolve={handleResolve} 
-              p2pMode={p2pMode} 
-              setP2pMode={setP2pMode} 
-              onEditReport={setEditingReport} 
-            />
-          </section>
-        </div>
-      </main>
+        )}
+
+        {/* PROFILE TAB */}
+        {activeTab === 'profile' && (
+          <ProfileScreen
+            volunteerId={volunteerId}
+            reports={reports}
+            onServerSync={handleServerSync}
+            onPeerSync={handlePeerSync}
+            syncStatus={syncStatus}
+            onLogout={handleLogout}
+          />
+        )}
+      </div>
+
+      {/* ── Bottom tab bar ── */}
+      <nav className="bottom-tab-bar">
+        {TABS.map(({ id, label, Icon }) => {
+          const isActive = activeTab === id;
+          const badge = id === 'profile' && conflictCount > 0 ? conflictCount : null;
+          return (
+            <button
+              key={id}
+              id={`tab-${id}`}
+              className={`tab-btn-nav ${isActive ? 'tab-active-nav' : ''}`}
+              onClick={() => { setActiveTab(id); setShowForm(false); setEditingReport(null); }}
+            >
+              <div className="tab-icon-wrap">
+                <Icon size={22} />
+                {badge && <span className="tab-badge">{badge}</span>}
+              </div>
+              <span className="tab-label">{label}</span>
+            </button>
+          );
+        })}
+      </nav>
     </div>
   );
 }
