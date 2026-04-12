@@ -70,7 +70,7 @@ async function performSync(url) {
   }
 }
 
-const BASE_URL = 'http://172.20.10.2:3001';
+const BASE_URL = 'https://napping-woven-iciness.ngrok-free.dev';
 
 export async function syncWithServer() {
   return await performSync(`${BASE_URL}/sync`);
