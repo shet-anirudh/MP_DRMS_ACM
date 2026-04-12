@@ -36,11 +36,16 @@ function mergeFieldClient(localField, serverField) {
   return localField;
 }
 
-async function performSync(url) {
+async function performSync(url, timeoutConfig = 0) {
   try {
     const localReports = await getReports();
     
-    const response = await axios.post(url, { reports: localReports });
+    const response = await axios.post(url, { reports: localReports }, {
+      timeout: timeoutConfig,
+      headers: {
+        'ngrok-skip-browser-warning': 'true'
+      }
+    });
     const serverReports = response.data.reports;
     
     for (const report of serverReports) {
@@ -51,10 +56,12 @@ async function performSync(url) {
           reportId: report.reportId,
           injuredCount: mergeFieldClient(existingLocal.injuredCount, report.injuredCount),
           notes: mergeFieldClient(existingLocal.notes, report.notes),
-          location: mergeFieldClient(existingLocal.location, report.location)
+          location: mergeFieldClient(existingLocal.location, report.location),
+          priority: mergeFieldClient(existingLocal.priority, report.priority),
+          volunteersRequired: mergeFieldClient(existingLocal.volunteersRequired, report.volunteersRequired)
         };
         
-        const hasConflict = ['injuredCount', 'notes', 'location'].some(f => mergedReport[f]?.conflict === true);
+        const hasConflict = ['injuredCount', 'notes', 'location', 'priority', 'volunteersRequired'].some(f => mergedReport[f]?.conflict === true);
         mergedReport.syncStatus = hasConflict ? 'conflict' : 'synced';
         
         await updateReport(report.reportId, mergedReport);
@@ -70,13 +77,21 @@ async function performSync(url) {
   }
 }
 
+const BASE_URL = import.meta.env.VITE_SYNC_URL || 'http://localhost:3001';
+
 export async function syncWithServer() {
-  return await performSync('http://localhost:3001/sync');
+  return await performSync(`${BASE_URL}/sync`);
 }
 
-export async function syncWithPeer(ip) {
-  const cleanIp = ip.replace(/^https?:\/\//, '');
-  return await performSync(`http://${cleanIp}:3001/p2p-sync`);
+export async function syncWithPeer(peerIp) {
+  const cleanIp = peerIp.replace(/^https?:\/\//, '');
+  const url = `http://${cleanIp}:3001/sync`;
+  try {
+    return await performSync(url, 5000);
+  } catch (error) {
+    console.error("Peer sync error:", error);
+    throw new Error("Could not reach peer device");
+  }
 }
 
 export function isOnline() {
