@@ -70,8 +70,10 @@ async function performSync(url) {
   }
 }
 
+const BASE_URL = 'http://172.20.10.2:3001';
+
 export async function syncWithServer() {
-  return await performSync('http://localhost:3001/sync');
+  return await performSync(`${BASE_URL}/sync`);
 }
 
 export async function syncWithPeer(ip) {
