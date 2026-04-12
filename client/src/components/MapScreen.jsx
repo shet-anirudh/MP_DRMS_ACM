@@ -34,6 +34,7 @@ export function MapScreen({ reports, onAddReport }) {
         const pv = r.priority?.value ?? 'Medium';
         return pv.charAt(0).toUpperCase() + pv.slice(1).toLowerCase();
       })(),
+      volunteersRequired: r.volunteersRequired?.value === true,
       label: `#${r.reportId.slice(0, 6)} – ${r.notes?.value ?? ''}`,
     }));
 
