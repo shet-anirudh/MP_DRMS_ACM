@@ -36,11 +36,12 @@ function mergeFieldClient(localField, serverField) {
   return localField;
 }
 
-async function performSync(url) {
+async function performSync(url, timeoutConfig = 0) {
   try {
     const localReports = await getReports();
     
     const response = await axios.post(url, { reports: localReports }, {
+      timeout: timeoutConfig,
       headers: {
         'ngrok-skip-browser-warning': 'true'
       }
@@ -80,9 +81,15 @@ export async function syncWithServer() {
   return await performSync(`${BASE_URL}/sync`);
 }
 
-export async function syncWithPeer(ip) {
-  const cleanIp = ip.replace(/^https?:\/\//, '');
-  return await performSync(`http://${cleanIp}:3001/p2p-sync`);
+export async function syncWithPeer(peerIp) {
+  const cleanIp = peerIp.replace(/^https?:\/\//, '');
+  const url = `http://${cleanIp}:3001/sync`;
+  try {
+    return await performSync(url, 5000);
+  } catch (error) {
+    console.error("Peer sync error:", error);
+    throw new Error("Could not reach peer device");
+  }
 }
 
 export function isOnline() {

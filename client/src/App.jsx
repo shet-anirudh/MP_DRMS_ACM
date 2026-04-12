@@ -4,6 +4,7 @@ import { syncWithServer, syncWithPeer, isOnline } from './services/sync.js';
 import { getDeviceId } from './services/deviceId.js';
 import { ReportForm } from './components/ReportForm.jsx';
 import { ReportList } from './components/ReportList.jsx';
+import { PeerDiscoveryScreen } from './screens/PeerDiscoveryScreen.jsx';
 import './App.css';
 
 function App() {
@@ -11,6 +12,34 @@ function App() {
   const [syncStatus, setSyncStatus] = useState('idle');
   const [peerIp, setPeerIp] = useState('');
   const [p2pSyncStatus, setP2pSyncStatus] = useState('idle');
+  const [p2pMode, setP2pMode] = useState(false);
+  const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
+
+  const handlePeerSelected = async (selectedIp) => {
+    setShowDiscoveryModal(false);
+    setSyncStatus('syncing');
+    try {
+      const updated = await syncWithPeer(selectedIp);
+      setReports(updated);
+      setSyncStatus('done');
+      setTimeout(() => setSyncStatus('idle'), 2000);
+      
+      const hasConflict = updated.some(r => r.syncStatus === 'conflict');
+      if (hasConflict) {
+        setTimeout(() => {
+          const conflictEl = document.querySelector('.badge-red');
+          if (conflictEl) {
+            conflictEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    } catch (err) {
+      console.error("Peer sync error:", err);
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+      window.alert("Could not reach peer device. Make sure both devices are on the same WiFi network.");
+    }
+  };
 
   const fetchReports = async () => {
     try {
@@ -115,21 +144,57 @@ function App() {
 
   return (
     <div className="app-container">
+      {showDiscoveryModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, backgroundColor: 'var(--bg-color)', overflow: 'auto' }}>
+          <PeerDiscoveryScreen 
+            onPeerSelected={handlePeerSelected} 
+            onBack={() => setShowDiscoveryModal(false)} 
+          />
+        </div>
+      )}
+      {p2pMode && (
+        <div style={{ background: '#e67e22', color: 'white', padding: '0.5rem', textAlign: 'center', width: '100%', fontWeight: 'bold' }}>
+          P2P Mode Active — syncing peer to peer
+        </div>
+      )}
       <header>
         <h1>Disaster Response App</h1>
         <div className="sync-controls">
-          <button 
-            onClick={handleSync} 
-            disabled={syncStatus === 'syncing'}
-            className="sync-btn"
-          >
-            Sync Now
-          </button>
+          {!p2pMode ? (
+            <button 
+              onClick={handleSync} 
+              disabled={syncStatus === 'syncing'}
+              className="sync-btn"
+            >
+              Sync Now
+            </button>
+          ) : (
+            <button 
+              onClick={() => setShowDiscoveryModal(true)} 
+              disabled={syncStatus === 'syncing'}
+              className="sync-btn"
+            >
+              Find Nearby Devices
+            </button>
+          )}
+          
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginLeft: '10px' }}>
+            <button 
+              onClick={() => setP2pMode(!p2pMode)} 
+              className="sync-btn"
+              style={{ background: p2pMode ? '#e67e22' : 'transparent', border: '1px solid rgba(255,255,255,0.2)', width: '100%' }}
+            >
+              P2P Mode
+            </button>
+            <span style={{ fontSize: '0.65rem', color: '#95a5a6', marginTop: '4px' }}>
+              Uses WiFi Direct in production · Simulated over LAN for demo
+            </span>
+          </div>
           
           {syncStatus !== 'idle' && (
             <span className="sync-status">
-              {syncStatus === 'syncing' && 'Syncing...'}
-              {syncStatus === 'done' && 'Synced ✓'}
+              {syncStatus === 'syncing' && (p2pMode ? 'Syncing with peer...' : 'Syncing...')}
+              {syncStatus === 'done' && (p2pMode ? 'Sync complete!' : 'Synced ✓')}
               {syncStatus === 'error' && 'Sync failed'}
               {syncStatus === 'offline' && 'You are offline'}
             </span>
@@ -140,7 +205,7 @@ function App() {
         <div className="layout-grid">
           <section className="form-section">
             <h2>Add New Report</h2>
-            <ReportForm onReportAdded={handleReportAdded} />
+            <ReportForm onReportAdded={handleReportAdded} p2pMode={p2pMode} setP2pMode={setP2pMode} />
             
             <div className="p2p-card" style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--surface-color)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
               <h3 style={{ marginTop: 0 }}>P2P Local Sync</h3>
@@ -167,7 +232,7 @@ function App() {
           </section>
           <section className="list-section">
             <h2>Recent Reports</h2>
-            <ReportList reports={reports} onResolve={handleResolve} />
+            <ReportList reports={reports} onResolve={handleResolve} p2pMode={p2pMode} setP2pMode={setP2pMode} />
           </section>
         </div>
       </main>
