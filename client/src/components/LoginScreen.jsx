@@ -14,27 +14,27 @@ export function LoginScreen({ onLogin }) {
   return (
     <div className="screen-content justify-space-between" style={{ backgroundColor: 'var(--bg-color)' }}>
       <div className="flex-col gap-24" style={{ marginTop: '40px' }}>
-        <h1 className="heading-lg">DisasterSync</h1>
+        <h1 className="heading-lg">DRMS</h1>
         <h2 className="heading-md">Hi, Volunteer!</h2>
-        
+
         <form className="flex-col" onSubmit={handleSubmit}>
-          <input 
-            type="text" 
-            className="input-field" 
-            placeholder="Volunteer ID / Email" 
+          <input
+            type="text"
+            className="input-field"
+            placeholder="Volunteer ID / Email"
             value={volunteerId}
             onChange={(e) => setVolunteerId(e.target.value)}
           />
-          <input 
-            type="password" 
-            className="input-field" 
-            placeholder="Password" 
+          <input
+            type="password"
+            className="input-field"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          
+
           <div className="spacer" style={{ minHeight: '40px' }} />
-          
+
           <div className="flex-col gap-16">
             <button type="submit" className="btn-pill btn-black" disabled={!volunteerId}>
               Sign in
