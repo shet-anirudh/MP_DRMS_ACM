@@ -40,7 +40,11 @@ async function performSync(url) {
   try {
     const localReports = await getReports();
     
-    const response = await axios.post(url, { reports: localReports });
+    const response = await axios.post(url, { reports: localReports }, {
+      headers: {
+        'ngrok-skip-browser-warning': 'true'
+      }
+    });
     const serverReports = response.data.reports;
     
     for (const report of serverReports) {
