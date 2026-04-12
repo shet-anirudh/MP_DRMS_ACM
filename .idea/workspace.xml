@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="7dc87f4d-851d-40b3-a392-c6e1615db4d8" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/markdown.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/MP/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/client/MP/app.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/MP/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/client/MP/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/android/app/capacitor.build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/client/android/app/capacitor.build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/android/capacitor.settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/client/android/capacitor.settings.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/client/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/client/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/App.css" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/App.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/components/ReportForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/ReportForm.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/index.css" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3CF5sRHR2ZCmtve1hQ4CQL91XKS" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "atisha",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/Atisha/MP_DRMS_ACM",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "to.speed.mode.migration.done": "true"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="7dc87f4d-851d-40b3-a392-c6e1615db4d8" name="Changes" comment="" />
+      <created>1775968685030</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1775968685030</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
