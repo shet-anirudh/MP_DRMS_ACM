@@ -4,6 +4,7 @@ import { syncWithServer, syncWithPeer, isOnline } from './services/sync.js';
 import { getDeviceId } from './services/deviceId.js';
 import { ReportForm } from './components/ReportForm.jsx';
 import { ReportList } from './components/ReportList.jsx';
+import { MapView } from './components/MapView.jsx';
 import './App.css';
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
   const [syncStatus, setSyncStatus] = useState('idle');
   const [peerIp, setPeerIp] = useState('');
   const [p2pSyncStatus, setP2pSyncStatus] = useState('idle');
+  const [showMap, setShowMap] = useState(false);
 
   const fetchReports = async () => {
     try {
@@ -119,6 +121,13 @@ function App() {
         <h1>Disaster Response App</h1>
         <div className="sync-controls">
           <button 
+            onClick={() => setShowMap(!showMap)} 
+            className="sync-btn"
+            style={{ background: showMap ? '#e1b12c' : '#44bd32', marginRight: '10px' }}
+          >
+            {showMap ? 'Hide Map' : 'MAP VIEW'}
+          </button>
+          <button 
             onClick={handleSync} 
             disabled={syncStatus === 'syncing'}
             className="sync-btn"
@@ -137,6 +146,11 @@ function App() {
         </div>
       </header>
       <main>
+        {showMap ? (
+          <div style={{ padding: '0 20px 20px 20px' }}>
+            <MapView reports={reports} />
+          </div>
+        ) : (
         <div className="layout-grid">
           <section className="form-section">
             <h2>Add New Report</h2>
@@ -170,6 +184,7 @@ function App() {
             <ReportList reports={reports} onResolve={handleResolve} />
           </section>
         </div>
+        )}
       </main>
     </div>
   );
