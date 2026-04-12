@@ -1,111 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --bg-color: #F5F3EF;
+  --card-bg: #FFFFFF;
+  --primary-red: #E24B4A;
+  --primary-black: #000000;
+  --text-primary: #000000;
+  --text-muted: #9A9A9A;
+  --status-available: #1D9E75;
+  --status-busy: #EF9F27;
+  
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --border-radius-card: 20px;
+  --border-radius-pill: 999px;
+  --border-radius-input: 16px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+html, body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  height: 100%;
+  width: 100%;
+  overflow: hidden; /* App-like experience */
 }
 
 body {
-  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  height: 100vh; /* Using 100vh since we are inside capacitor/mobile view */
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.heading-lg {
+  font-size: 32px;
+  line-height: 1.2;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.heading-md {
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.body-text {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+/* Button variants */
+.btn-pill {
+  width: 100%;
+  border-radius: var(--border-radius-pill);
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+  font-family: inherit;
+}
+
+.btn-pill:active {
+  opacity: 0.8;
+}
+
+.btn-pill:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-black {
+  background-color: var(--primary-black);
+  color: white;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--primary-black);
+  border: 1px solid var(--primary-black);
+}
+
+.btn-red {
+  background-color: var(--primary-red);
+  color: white;
+}
+
+/* Base Card styles */
+.card {
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius-card);
+  padding: 20px;
+}
+
+/* Avatar styling */
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  background-color: #E0E0E0;
+  color: var(--primary-black);
+  flex-shrink: 0;
+}
+
+.avatar.available {
+  border: 3px solid var(--status-available);
+}
+
+.avatar.busy {
+  border: 3px solid var(--status-busy);
+}
+
+/* Base inputs */
+input, textarea {
+  font-family: inherit;
 }

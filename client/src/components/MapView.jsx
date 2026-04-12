@@ -3,20 +3,18 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useOfflineTiles, base64ToArrayBuffer } from '../hooks/useOfflineTiles';
-import { NavigationPanel } from './NavigationPanel';
 import { DownloadMapModal } from './DownloadMapModal';
-import { Layers, Download, Navigation } from 'lucide-react';
+import { Download, Navigation } from 'lucide-react';
 
-export function MapView() {
+export function MapView({ reports }) {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const { location, error: locError } = useGeolocation(true);
   const offlineTiles = useOfflineTiles();
+  const initialCenterSet = useRef(false);
   
   const [showDownloadModal, setShowDownloadModal] = useState(false);
-  const [showNavPanel, setShowNavPanel] = useState(false);
-  const [destPoint, setDestPoint] = useState(null);
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -76,6 +74,8 @@ export function MapView() {
 
     mapRef.current.on('load', () => {
       setMapLoaded(true);
+      
+      // User location dot layer
       mapRef.current.addSource('user-location', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] }
@@ -92,44 +92,37 @@ export function MapView() {
         }
       });
       
-      mapRef.current.addSource('destination-pin', {
+      // Report map pins layer
+      mapRef.current.addSource('reports-source', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] }
       });
       mapRef.current.addLayer({
-        id: 'destination-pin-layer',
+        id: 'reports-layer',
         type: 'circle',
-        source: 'destination-pin',
+        source: 'reports-source',
         paint: {
-          'circle-radius': 8,
-          'circle-color': '#e74c3c',
+          'circle-radius': 10,
+          'circle-color': [
+            'match',
+            ['get', 'priority'],
+            'High', '#E24B4A',
+            'Medium', '#EF9F27',
+            'Low', '#1D9E75',
+            '#000000' // default
+          ],
           'circle-stroke-width': 2,
-          'circle-stroke-color': '#c0392b'
-        }
-      });
-      
-      mapRef.current.addSource('route-line', {
-        type: 'geojson',
-        data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [] } }
-      });
-      mapRef.current.addLayer({
-        id: 'route-line-layer',
-        type: 'line',
-        source: 'route-line',
-        paint: {
-          'line-color': '#3498db',
-          'line-width': 4,
-          'line-dasharray': [2, 2]
+          'circle-stroke-color': '#ffffff'
         }
       });
     });
 
     return () => {
        try { maplibregl.removeProtocol('osm-offline'); } catch(e){}
-       // Do not remove map instance on generic remount during dev
     };
   }, []);
 
+  // Update user location on map
   useEffect(() => {
     if (mapLoaded && location && mapRef.current) {
        const userSrc = mapRef.current.getSource('user-location');
@@ -137,42 +130,36 @@ export function MapView() {
           userSrc.setData({
             type: 'FeatureCollection',
             features: [{
-              type: 'Feature',
-              geometry: { type: 'Point', coordinates: [location.lng, location.lat] }
+               type: 'Feature',
+               geometry: { type: 'Point', coordinates: [location.lng, location.lat] }
             }]
           });
+          
+          if (!initialCenterSet.current) {
+              mapRef.current.jumpTo({ center: [location.lng, location.lat], zoom: 14 });
+              initialCenterSet.current = true;
+          }
        }
     }
   }, [location, mapLoaded]);
 
+  // Update reported incidents tightly onto the map
   useEffect(() => {
-    if (mapLoaded && mapRef.current) {
-        const destSrc = mapRef.current.getSource('destination-pin');
-        const routeSrc = mapRef.current.getSource('route-line');
-        
-        if (destPoint) {
-            destSrc.setData({
-               type: 'FeatureCollection',
-               features: [{
+    if (mapLoaded && mapRef.current && reports) {
+        const reportsSrc = mapRef.current.getSource('reports-source');
+        if (reportsSrc) {
+            const features = reports
+              .filter(r => r.location && typeof r.location.lat === 'number' && typeof r.location.lon === 'number')
+              .map(r => ({
                  type: 'Feature',
-                 geometry: { type: 'Point', coordinates: [destPoint.lng, destPoint.lat] }
-               }]
-            });
-            if (location) {
-                routeSrc.setData({
-                  type: 'Feature',
-                  geometry: { type: 'LineString', coordinates: [
-                     [location.lng, location.lat],
-                     [destPoint.lng, destPoint.lat]
-                  ]}
-                });
-            }
-        } else {
-            destSrc.setData({ type: 'FeatureCollection', features: [] });
-            routeSrc.setData({ type: 'FeatureCollection', features: [] });
+                 geometry: { type: 'Point', coordinates: [r.location.lon, r.location.lat] },
+                 properties: { priority: r.priority, id: r.reportId }
+              }));
+            
+            reportsSrc.setData({ type: 'FeatureCollection', features });
         }
     }
-  }, [destPoint, location, mapLoaded]);
+  }, [reports, mapLoaded]);
 
   const handleDownload = (radius) => {
      if (!location) return alert("Waiting for GPS lock to download surrounding area.");
@@ -180,10 +167,10 @@ export function MapView() {
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: 'calc(100vh - 80px)', background: '#1e272e', borderRadius: '12px', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
       <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />
       
-      <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', flexDirection: 'column', gap: '10px', zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: 90, right: 16, display: 'flex', flexDirection: 'column', gap: '10px', zIndex: 10 }}>
         <button 
            onClick={() => setShowDownloadModal(true)}
            style={{ background: '#2f3542', color: 'white', padding: '12px', border: '2px solid rgba(255,255,255,0.1)', borderRadius: '50%', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}
@@ -201,13 +188,6 @@ export function MapView() {
           <Navigation size={20}/>
         </button>
       </div>
-      
-      <button 
-         onClick={() => setShowNavPanel(true)}
-         style={{ position: 'absolute', bottom: 20, right: 20, background: '#3742fa', color: 'white', padding: '15px', border: 'none', borderRadius: '50%', cursor: 'pointer', boxShadow: '0 5px 15px rgba(55, 66, 250, 0.4)', zIndex: 10 }}
-      >
-        <Layers size={24}/>
-      </button>
 
       {showDownloadModal && (
         <DownloadMapModal 
@@ -216,15 +196,6 @@ export function MapView() {
           progress={offlineTiles.downloadProgress}
           packs={offlineTiles.downloadedPacks}
           onDownload={handleDownload}
-        />
-      )}
-
-      {showNavPanel && (
-        <NavigationPanel 
-          userLat={location?.lat}
-          userLng={location?.lng}
-          onClose={() => setShowNavPanel(false)}
-          onTargetSet={(lat, lng) => setDestPoint({lat, lng})}
         />
       )}
     </div>

@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 
 const { router: syncRoute } = require('./routes/sync');
 const p2pRoute = require('./routes/p2p');
+const { initDB } = require('./db/postgres');
 
 const app = express();
 
@@ -22,8 +23,17 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });
 });
 
-// Start the server
-const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Read port from environment
+const PORT = process.env.PORT || 3001;
+
+// Connect to DB, then start server
+initDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Failed to connect to database:', err);
+    process.exit(1);
+  });
