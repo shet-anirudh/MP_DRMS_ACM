@@ -56,10 +56,12 @@ async function performSync(url, timeoutConfig = 0) {
           reportId: report.reportId,
           injuredCount: mergeFieldClient(existingLocal.injuredCount, report.injuredCount),
           notes: mergeFieldClient(existingLocal.notes, report.notes),
-          location: mergeFieldClient(existingLocal.location, report.location)
+          location: mergeFieldClient(existingLocal.location, report.location),
+          priority: mergeFieldClient(existingLocal.priority, report.priority),
+          volunteersRequired: mergeFieldClient(existingLocal.volunteersRequired, report.volunteersRequired)
         };
         
-        const hasConflict = ['injuredCount', 'notes', 'location'].some(f => mergedReport[f]?.conflict === true);
+        const hasConflict = ['injuredCount', 'notes', 'location', 'priority', 'volunteersRequired'].some(f => mergedReport[f]?.conflict === true);
         mergedReport.syncStatus = hasConflict ? 'conflict' : 'synced';
         
         await updateReport(report.reportId, mergedReport);

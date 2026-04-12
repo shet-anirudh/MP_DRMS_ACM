@@ -7,6 +7,8 @@ export function ConflictResolver({ reportId, fieldName, fieldData, onResolve }) 
   
   const renderValue = (val) => {
     if (val === undefined || val === null) return 'N/A';
+    if (fieldName === 'volunteersRequired') return val.value ? 'Yes' : 'No';
+    if (fieldName === 'priority') return String(val.value).toUpperCase();
     if (val.value !== undefined) return val.value;
     if (val.lat !== undefined && val.lon !== undefined) return `${val.lat}, ${val.lon}`;
     return JSON.stringify(val);

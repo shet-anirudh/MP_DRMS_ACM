@@ -14,6 +14,7 @@ function App() {
   const [p2pSyncStatus, setP2pSyncStatus] = useState('idle');
   const [p2pMode, setP2pMode] = useState(false);
   const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
+  const [editingReport, setEditingReport] = useState(null);
 
   const handlePeerSelected = async (selectedIp) => {
     setShowDiscoveryModal(false);
@@ -66,6 +67,7 @@ function App() {
 
   const handleReportAdded = () => {
     fetchReports();
+    setEditingReport(null);
   };
 
   const handleResolve = async (reportId, fieldName, chosenVersion) => {
@@ -204,8 +206,14 @@ function App() {
       <main>
         <div className="layout-grid">
           <section className="form-section">
-            <h2>Add New Report</h2>
-            <ReportForm onReportAdded={handleReportAdded} p2pMode={p2pMode} setP2pMode={setP2pMode} />
+            <h2>{editingReport ? 'Edit Report' : 'Add New Report'}</h2>
+            <ReportForm 
+              onReportAdded={handleReportAdded} 
+              p2pMode={p2pMode} 
+              setP2pMode={setP2pMode} 
+              editingReport={editingReport}
+              onCancelEdit={() => setEditingReport(null)}
+            />
             
             <div className="p2p-card" style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--surface-color)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
               <h3 style={{ marginTop: 0 }}>P2P Local Sync</h3>
@@ -232,7 +240,13 @@ function App() {
           </section>
           <section className="list-section">
             <h2>Recent Reports</h2>
-            <ReportList reports={reports} onResolve={handleResolve} p2pMode={p2pMode} setP2pMode={setP2pMode} />
+            <ReportList 
+              reports={reports} 
+              onResolve={handleResolve} 
+              p2pMode={p2pMode} 
+              setP2pMode={setP2pMode} 
+              onEditReport={setEditingReport} 
+            />
           </section>
         </div>
       </main>

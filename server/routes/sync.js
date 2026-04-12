@@ -65,10 +65,12 @@ router.post('/', async (req, res) => {
           reportId: incomingReport.reportId,
           injuredCount: mergeField(serverReport.injuredCount, incomingReport.injuredCount),
           notes: mergeField(serverReport.notes, incomingReport.notes),
-          location: mergeField(serverReport.location, incomingReport.location)
+          location: mergeField(serverReport.location, incomingReport.location),
+          priority: mergeField(serverReport.priority, incomingReport.priority),
+          volunteersRequired: mergeField(serverReport.volunteersRequired, incomingReport.volunteersRequired)
         };
 
-        const hasConflict = ['injuredCount', 'notes', 'location'].some(f => mergedReport[f]?.conflict === true);
+        const hasConflict = ['injuredCount', 'notes', 'location', 'priority', 'volunteersRequired'].some(f => mergedReport[f]?.conflict === true);
         mergedReport.syncStatus = hasConflict ? 'conflict' : 'synced';
 
         await store.upsertReport(mergedReport);
