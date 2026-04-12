@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { addReport } from '../db/db.js';
 import { getDeviceId } from '../services/deviceId.js';
+import { Geolocation } from '@capacitor/geolocation';
 
 export function ReportForm({ onReportAdded }) {
   const [injuredCount, setInjuredCount] = useState('');
@@ -9,26 +10,30 @@ export function ReportForm({ onReportAdded }) {
   const [lon, setLon] = useState('');
   const [locationLoading, setLocationLoading] = useState(false);
 
-  const handleGetLocation = (e) => {
+  const handleGetLocation = async (e) => {
     e.preventDefault();
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
-      return;
-    }
-    
     setLocationLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLat(position.coords.latitude);
-        setLon(position.coords.longitude);
-        setLocationLoading(false);
-      },
-      (error) => {
-        alert("Unable to retrieve location. Please enter manually.");
-        console.error(error);
-        setLocationLoading(false);
+    try {
+      // Check existing permissions first
+      const permissions = await Geolocation.checkPermissions();
+      if (permissions.location !== 'granted') {
+        const request = await Geolocation.requestPermissions();
+        if (request.location !== 'granted') {
+          alert("Location permission denied. Please allow it or enter manually.");
+          setLocationLoading(false);
+          return;
+        }
       }
-    );
+      
+      const position = await Geolocation.getCurrentPosition();
+      setLat(position.coords.latitude);
+      setLon(position.coords.longitude);
+    } catch (error) {
+      alert("Unable to retrieve location. Please enter manually.");
+      console.error(error);
+    } finally {
+      setLocationLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
