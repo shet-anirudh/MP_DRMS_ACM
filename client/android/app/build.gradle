@@ -40,6 +40,8 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+    // Google Nearby Connections — P2P transport layer
+    implementation 'com.google.android.gms:play-services-nearby:19.3.0'
 }
 
 apply from: 'capacitor.build.gradle'

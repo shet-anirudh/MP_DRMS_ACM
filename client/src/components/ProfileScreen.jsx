@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
-  User, Server, Smartphone, Radio, AlertCircle, CheckCircle, Loader, ChevronRight
+  User, Server, Smartphone, Radio, AlertCircle, CheckCircle,
+  Loader, ChevronRight, ChevronDown, ChevronUp, Zap
 } from 'lucide-react';
 
 export function ProfileScreen({
@@ -8,11 +9,13 @@ export function ProfileScreen({
   reports,
   onServerSync,
   onPeerSync,
+  onNearbySync,   // () => void — opens the PeerSyncScreen
   syncStatus,
   onLogout,
 }) {
   const [peerIp, setPeerIp] = useState('');
   const [peerStatus, setPeerStatus] = useState('idle'); // idle | syncing | done | error
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const deviceId = (() => {
     try { return localStorage.getItem('deviceId') || 'unknown'; } catch { return 'unknown'; }
@@ -90,37 +93,70 @@ export function ProfileScreen({
         )}
       </div>
 
-      {/* P2P Sync */}
-      <div className="profile-section">
-        <h3 className="section-label"><Radio size={16} /> P2P Local Sync</h3>
-        <p className="hint-text">Sync directly with a device on the same WiFi network.</p>
-        <div className="peer-input-row">
-          <input
-            id="peer-ip-input"
-            type="text"
-            placeholder="192.168.1.50"
-            value={peerIp}
-            onChange={e => setPeerIp(e.target.value)}
-            className="peer-ip-input"
-          />
-          <button
-            id="btn-peer-sync"
-            className="btn-pill btn-black"
-            onClick={handlePeerSync}
-            disabled={peerStatus === 'syncing' || !peerIp.trim()}
-          >
-            {peerStatus === 'syncing' ? <Loader size={14} className="spin" /> : <Smartphone size={14} />}
-            {peerStatus === 'syncing' ? 'Syncing…' :
-             peerStatus === 'done'    ? 'Done ✓'   :
-             peerStatus === 'error'   ? 'Failed'   : 'Sync'}
-          </button>
-        </div>
+      {/* Nearby P2P Sync — primary */}
+      <div className="profile-section profile-section-nearby">
+        <h3 className="section-label"><Radio size={16} /> Nearby Device Sync</h3>
+        <p className="hint-text">
+          Automatically discover and sync with volunteers nearby — no internet or IP address needed.
+        </p>
+        <button
+          id="btn-nearby-sync"
+          className="btn-pill btn-nearby"
+          onClick={onNearbySync}
+        >
+          <Zap size={14} />
+          Find Nearby Devices
+        </button>
+
+        {/* Advanced accordion — manual LAN IP fallback */}
+        <button
+          className="nearby-advanced-toggle"
+          onClick={() => setAdvancedOpen(o => !o)}
+          id="btn-advanced-toggle"
+        >
+          {advancedOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          Advanced: Manual IP Sync
+        </button>
+
+        {advancedOpen && (
+          <div className="nearby-advanced-panel">
+            <p className="hint-text">
+              For laptop-to-device sync on the same WiFi network. Enter the device's local IP.
+            </p>
+            <div className="peer-input-row">
+              <input
+                id="peer-ip-input"
+                type="text"
+                placeholder="192.168.1.50"
+                value={peerIp}
+                onChange={e => setPeerIp(e.target.value)}
+                className="peer-ip-input"
+              />
+              <button
+                id="btn-peer-sync"
+                className="btn-pill btn-black"
+                onClick={handlePeerSync}
+                disabled={peerStatus === 'syncing' || !peerIp.trim()}
+              >
+                {peerStatus === 'syncing' ? <Loader size={14} className="spin" /> : <Smartphone size={14} />}
+                {peerStatus === 'syncing' ? 'Syncing…' :
+                 peerStatus === 'done'    ? 'Done ✓'   :
+                 peerStatus === 'error'   ? 'Failed'   : 'Sync'}
+              </button>
+            </div>
+            {peerStatus === 'error' && (
+              <p className="hint-text error-text">Could not reach peer device.</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Conflicts */}
       {conflictReports.length > 0 && (
         <div className="profile-section">
-          <h3 className="section-label"><AlertCircle size={16} color="#E24B4A" /> Conflicts ({conflictReports.length})</h3>
+          <h3 className="section-label">
+            <AlertCircle size={16} color="#E24B4A" /> Conflicts ({conflictReports.length})
+          </h3>
           <div className="conflict-summary-list">
             {conflictReports.map(r => (
               <div key={r.reportId} className="conflict-summary-item">

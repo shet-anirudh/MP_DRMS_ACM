@@ -707,3 +707,123 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
+
+/* ── Nearby Sync UI ─────────────────────────────────────────────────────── */
+.profile-section-nearby {
+  border-color: rgba(52, 152, 219, 0.4);
+  background: linear-gradient(180deg, rgba(52, 152, 219, 0.05) 0%, var(--card-bg) 100%);
+}
+
+.btn-nearby {
+  background: var(--blue);
+  color: white;
+  width: 100%;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.25);
+  transition: all 0.2s ease;
+}
+.btn-nearby:hover {
+  background: #2980b9;
+  box-shadow: 0 6px 16px rgba(52, 152, 219, 0.35);
+  transform: translateY(-1px);
+}
+
+.nearby-advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-top: 8px;
+  transition: color 0.15s;
+}
+.nearby-advanced-toggle:hover {
+  color: var(--text-heading);
+}
+
+.nearby-advanced-panel {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nearby-demo-banner {
+  background: rgba(245, 166, 35, 0.15);
+  color: var(--amber);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 1.25rem;
+}
+
+.nearby-error-banner {
+  background: rgba(226, 75, 74, 0.15);
+  color: var(--primary-red);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 1.25rem;
+}
+
+.peer-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.nearby-transfer-progress {
+  height: 14px;
+  background: var(--surface-alt);
+  border-radius: 7px;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.nearby-transfer-bar {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 7px;
+  transition: width 0.3s ease-out;
+}
+
+.nearby-transfer-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.peer-conflict-count {
+  color: var(--primary-red);
+  font-weight: 700;
+}

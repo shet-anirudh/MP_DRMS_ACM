@@ -5,11 +5,12 @@ import { initDB, getReports, updateReport } from './db/db.js';
 import { syncWithServer, syncWithPeer, isOnline } from './services/sync.js';
 import { getDeviceId } from './services/deviceId.js';
 
-import { LoginScreen }    from './components/LoginScreen.jsx';
-import { MapScreen }      from './components/MapScreen.jsx';
-import { ReportForm }     from './components/ReportForm.jsx';
-import { ReportList }     from './components/ReportList.jsx';
-import { ProfileScreen }  from './components/ProfileScreen.jsx';
+import { LoginScreen }      from './components/LoginScreen.jsx';
+import { MapScreen }        from './components/MapScreen.jsx';
+import { ReportForm }       from './components/ReportForm.jsx';
+import { ReportList }       from './components/ReportList.jsx';
+import { ProfileScreen }    from './components/ProfileScreen.jsx';
+import { PeerSyncScreen }   from './components/PeerSyncScreen.jsx';
 
 import './App.css';
 
@@ -24,9 +25,10 @@ function App() {
   const [volunteerId, setVolunteerId] = useState(() => localStorage.getItem('volunteerId') || null);
 
   // ─── Navigation ─────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab]     = useState('map');
-  const [showForm, setShowForm]       = useState(false);
+  const [activeTab, setActiveTab]         = useState('map');
+  const [showForm, setShowForm]           = useState(false);
   const [editingReport, setEditingReport] = useState(null);
+  const [showNearbySync, setShowNearbySync] = useState(false);
 
   // ─── Data ────────────────────────────────────────────────────────────────────
   const [reports, setReports]         = useState([]);
@@ -114,11 +116,21 @@ function App() {
     }
   }, []);
 
-  // ─── P2P sync (called from Profile screen) ───────────────────────────────────
+  // ─── P2P sync (manual LAN — called from Profile screen advanced section) ───
   const handlePeerSync = useCallback(async (peerIp) => {
     const updated = await syncWithPeer(peerIp);
     setReports(updated);
   }, []);
+
+  // ─── Nearby sync — opens PeerSyncScreen overlay ──────────────────────────
+  const handleNearbySync = useCallback(() => {
+    setShowNearbySync(true);
+  }, []);
+
+  // ─── Called when Nearby sync completes — refresh reports ─────────────────
+  const handleNearbySyncComplete = useCallback(() => {
+    fetchReports();
+  }, [fetchReports]);
 
   // ─── Report form helpers ──────────────────────────────────────────────────────
   const handleReportAdded = useCallback(() => {
@@ -206,14 +218,23 @@ function App() {
         )}
 
         {/* PROFILE TAB */}
-        {activeTab === 'profile' && (
+        {activeTab === 'profile' && !showNearbySync && (
           <ProfileScreen
             volunteerId={volunteerId}
             reports={reports}
             onServerSync={handleServerSync}
             onPeerSync={handlePeerSync}
+            onNearbySync={handleNearbySync}
             syncStatus={syncStatus}
             onLogout={handleLogout}
+          />
+        )}
+
+        {/* NEARBY SYNC OVERLAY — rendered on top of profile tab */}
+        {activeTab === 'profile' && showNearbySync && (
+          <PeerSyncScreen
+            onBack={() => { setShowNearbySync(false); fetchReports(); }}
+            onSyncComplete={handleNearbySyncComplete}
           />
         )}
       </div>
