@@ -74,6 +74,16 @@ export async function isNearbyAvailable() {
  * @param {function} [onDisconnected] — Called when an active peer disconnects
  */
 export async function startNearbyDiscovery(deviceName, onPeerFound, onPeerLost, onDisconnected) {
+  // Request required permissions (Location/Bluetooth/WiFi Direct)
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await NearbyPlugin.requestPermissions();
+    } catch (e) {
+      console.warn('[NearbySync] Permissions request failed or was denied:', e);
+      throw new Error('Missing required permissions for Nearby Discovery');
+    }
+  }
+
   await _removeAllListeners();
 
   // Register event listeners before starting so no events are missed

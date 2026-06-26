@@ -35,10 +35,27 @@ import java.io.InputStream;
 @CapacitorPlugin(
     name = "NearbyPlugin",
     permissions = {
-        @Permission(strings = {Manifest.permission.ACCESS_FINE_LOCATION}),
-        @Permission(strings = {Manifest.permission.ACCESS_COARSE_LOCATION}),
-        @Permission(strings = {Manifest.permission.ACCESS_WIFI_STATE}),
-        @Permission(strings = {Manifest.permission.CHANGE_WIFI_STATE})
+        @Permission(
+            alias = "location",
+            strings = {
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            }
+        ),
+        @Permission(
+            alias = "bluetooth",
+            strings = {
+                "android.permission.BLUETOOTH_SCAN",
+                "android.permission.BLUETOOTH_CONNECT",
+                "android.permission.BLUETOOTH_ADVERTISE"
+            }
+        ),
+        @Permission(
+            alias = "wifi",
+            strings = {
+                "android.permission.NEARBY_WIFI_DEVICES"
+            }
+        )
     }
 )
 public class NearbyPlugin extends Plugin {
